@@ -107,7 +107,7 @@ Payments = class extends Axial.Component {
 			return (
 				<td className={`week ${weekCss(payment)} ${isSelected(payment)} ${payment.debts.find(debt => debt.status === 'expired') ? 'expired' : ''}`}>
 					<div className={`amount ${this.hasCustomLimit(payment.paymentDate) ? 'custom' : ''}`} 
-						onMouseOver={() => (payment.weekStartDate >= todayStartWeek) && this.set('hoverAmount', this.dateStr(payment.paymentDate))}>
+						onMouseOver={() => this.set('hoverAmount', this.dateStr(payment.paymentDate))}>
 						{
 							this.$.hoverAmount === this.dateStr(payment.paymentDate) 
 								? <input type="text" defaultValue={this.currency(this.getPaymentAmount(payment, true))} 
