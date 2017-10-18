@@ -20,7 +20,7 @@ Settings = class extends Axial.Component {
 	render() {
 		return (
 			<div className="settings">
-      <div id="logo">Weekly</div>
+      <div id="logo">{this.$.version}</div>
 				<label>Spend: <b>$</b><input type="text" className="limit" defaultValue={this.$.weeklyLimit} onKeyUp={e => this.onKeyUp(e, 'weeklyLimit')} onMouseOver={this.onMouseOver} onMouseOut={e => this.onMouseOut(e, 'weeklyLimit')} /></label>
         <label>On: <select defaultValue={this.$.weekPaymentDay} onChange={e => this.set('weekPaymentDay', parseFloat(e.target.value))}>
           <option value="0">Sun</option>

@@ -1,5 +1,6 @@
 const app = {
 	$: {
+		version: '1.0.0',
 		weeklyLimit: 200,
 		weekPaymentDay: 4,
 		maxWeekTolerance: 7,
@@ -28,6 +29,11 @@ const app = {
 		return this.$.edit && this.$.edit === debt;
 	},
 
+	setIsEnabled (debt, value) {
+		debt.enabled = value;
+		this.modify();
+	},
+
 	addDebt () {
 		if (arguments.length === 0) {
 			this.$.debtId = this.$.debtId + 1;
@@ -36,7 +42,8 @@ const app = {
 				id: id,
 				title: `Expense ${id}`,
 				amount: 0,
-				payed: new XDate()
+				payed: new XDate(),
+				enabled: true
 			};
 			this.$.debts.push(debt);
 			this.set('edit', debt);
@@ -113,8 +120,18 @@ const app = {
 		this.$.debts.forEach(debt => debt.payed = new XDate(XDate.parse(debt.payed)));
 	},
 
+	export () {
+		return btoa(JSON.stringify(this.$));
+	},
+
+	import (base64) {
+		this.$ = JSON.parse(atob(base64));
+		this.save(true);
+		location.reload();
+	},
+
 	modify () {
-		this.$.modified = true;
+		setTimeout(() => this.set(() => this.$.modified = true), 0);
 	},
 
 	dateStr (date) {
@@ -160,6 +177,9 @@ const app = {
 	debtsByWeek () {
 		let payments = {};
 		this.getSortedDebts().forEach(debt => {
+			if (!debt.enabled) {
+				return;
+			}
 			const key = this.getKeyFromDate(debt.payed, true);
 			if (!payments[key]) {
 				payments[key] = [];
@@ -216,8 +236,9 @@ const app = {
 		return week;
 	},
 	
-	getSortedDebts () {
-		return this.$.debts.sort((a, b) => {
+	getSortedDebts (showAll) {
+		const debts = this.$.debts.filter(debt => showAll === true || debt.enabled);
+		return debts.sort((a, b) => {
 			if (a.payed.getTime() === b.payed.getTime()) {
 				return 0;
 			} else if (a.payed.getTime() > b.payed.getTime()) {

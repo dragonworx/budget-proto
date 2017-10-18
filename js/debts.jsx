@@ -39,26 +39,28 @@ Debts = class extends Axial.Component {
 				<table cellSpacing="0" cellPadding="0">
 					<thead>
 						<tr>
-							<th>Title</th><th>Amount</th><th>Payed</th>
+							<th>Title</th>
+							<th>Amount</th>
+							<th>Payed</th>
 						</tr>
 					</thead>
 					<tbody>
 						{
-							this.getSortedDebts().map((debt, i) => {
+							this.getSortedDebts(true).map((debt, i) => {
 								const cssClass = rowCss();
 								return (
 									<tr
 										key={`debt${i}`}
 										className={`${cssClass} ${this.isHover(debt) ? 'hover' : ''}`}
-										onClick={() => document.getElementById(`debt-${debt.id}`).scrollIntoView({behavior:'smooth'})}
-										onMouseOver={() => !this.$.edit && this.set('hover', debt)}
+										onClick={() => debt.enabled && document.getElementById(`debt-${debt.id}`).scrollIntoView({behavior:'smooth'})}
+										onMouseOver={() => !this.$.edit && debt.enabled && this.set('hover', debt)}
 									>
-									<td onDoubleClick={e => this.onDblClicked(debt)}>{this.isEdit(debt) ? <input type="text" ref="title" defaultValue={debt.title} onKeyUp={e => this.onKeyUp(e)} onMouseOver={e => e.target.focus() || e.target.select()} /> : debt.title}</td>
-									<td onDoubleClick={e => this.onDblClicked(debt)}>${this.isEdit(debt) ? <input type="text" ref="amount" defaultValue={debt.amount} onKeyUp={e => this.onKeyUp(e)}  onMouseOver={e => e.target.focus() || e.target.select()}/> : debt.amount}</td>
-									<td onDoubleClick={e => this.onDblClicked(debt)}>
-										{this.isEdit(debt) ? <input type="text" ref="payed" defaultValue={debt.payed.toString('dd/MM/yy')} onKeyUp={e => this.onKeyUp(e, true)} onMouseOver={e => e.target.focus() || e.target.select()} /> : debt.payed.toString('dd/MM/yy')}
-										{this.isEdit(debt) || this.isHover(debt) ? <Actions debt={debt} onAccept={() => this.onAccept()} /> : null}
-									</td>
+										<td onDoubleClick={e => this.onDblClicked(debt)}><input type="checkbox" defaultChecked={debt.enabled} onChange={e => this.setIsEnabled(debt, e.target.checked)} />{this.isEdit(debt) ? <input type="text" ref="title" defaultValue={debt.title} onKeyUp={e => this.onKeyUp(e)} onMouseOver={e => e.target.focus() || e.target.select()} /> : debt.title}</td>
+										<td onDoubleClick={e => this.onDblClicked(debt)}>${this.isEdit(debt) ? <input type="text" ref="amount" defaultValue={debt.amount} onKeyUp={e => this.onKeyUp(e)}  onMouseOver={e => e.target.focus() || e.target.select()}/> : debt.amount}</td>
+										<td onDoubleClick={e => this.onDblClicked(debt)}>
+											{this.isEdit(debt) ? <input type="text" ref="payed" defaultValue={debt.payed.toString('dd/MM/yy')} onKeyUp={e => this.onKeyUp(e, true)} onMouseOver={e => e.target.focus() || e.target.select()} /> : debt.payed.toString('dd/MM/yy')}
+											{this.isEdit(debt) || this.isHover(debt) ? <Actions debt={debt} onAccept={() => this.onAccept()} /> : null}
+										</td>
 								</tr>
 								)
 							})
