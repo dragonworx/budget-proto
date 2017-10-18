@@ -1,20 +1,30 @@
+function newGuid() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 const app = {
-	$: {
-		version: '1.0.0',
-		weeklyLimit: 200,
-		weekPaymentDay: 4,
-		maxWeekTolerance: 7,
-		maxDebtTolerance: 6000,
-		debtId: 0,
-		debts: [],
-		hover: null,
-		edit: null,
-		saved: false,
-		modified: false,
-		hoverAmount: null,
-		customLimits: {},
-		paymentChecks: {}
+	defaultData () {
+		return {
+			version: '1.0.0',
+			weeklyLimit: 200,
+			weekPaymentDay: 4,
+			maxWeekTolerance: 7,
+			maxDebtTolerance: 6000,
+			debts: [],
+			hover: null,
+			edit: null,
+			saved: false,
+			modified: false,
+			hoverAmount: null,
+			customLimits: {},
+			paymentChecks: {}
+		}
 	},
+
+	$: null,
 
 	pad (num) {
 		let str = '' + num;
@@ -31,16 +41,16 @@ const app = {
 
 	setIsEnabled (debt, value) {
 		debt.enabled = value;
-		this.modify();
+		// weird behavior from checkboxes, other things dont need async delay
+		setTimeout(() => this.modify(), 0);
 	},
 
 	addDebt () {
 		if (arguments.length === 0) {
-			this.$.debtId = this.$.debtId + 1;
-			const id = this.$.debtId;
+			const id = this.newGuid();
 			const debt = {
 				id: id,
-				title: `Expense ${id}`,
+				title: 'New Expense',
 				amount: 0,
 				payed: new XDate(),
 				enabled: true
@@ -62,6 +72,7 @@ const app = {
 	},
 
 	init () {
+		this.$ = this.defaultData();
 		this.load();
 		setTimeout(() => {
 			if (this.$.debts.length > 0) {
@@ -74,8 +85,16 @@ const app = {
 	},
 
 	clear () {
-		this.set('debts', []);
+		const data = this.defaultData();
+		this.$ = data;
 		this.modify();
+	},
+
+	selectProfile () {
+		const profile = prompt('Enter profile name:');
+		if (profile) {
+			this.setProfile(profile);
+		}
 	},
 
 	setProfile (profile) {
@@ -120,18 +139,48 @@ const app = {
 		this.$.debts.forEach(debt => debt.payed = new XDate(XDate.parse(debt.payed)));
 	},
 
-	export () {
-		return btoa(JSON.stringify(this.$));
+	newGuid () {
+		const guid = newGuid();
+		if (this.$.debts.find(debt => debt.id === guid)) {
+			return this.guid;
+		}
+		return guid;
 	},
 
-	import (base64) {
-		this.$ = JSON.parse(atob(base64));
-		this.save(true);
-		location.reload();
+	export () {
+		const data = {
+			customLimits: this.$.customLimits,
+			debts: this.$.debts,
+			maxDebtTolerance: this.$.maxDebtTolerance,
+			maxWeekTolerance: this.$.maxWeekTolerance,
+			paymentChecks: this.$.paymentChecks,
+			weekPaymentDay: this.$.weekPaymentDay,
+			weeklyLimit: this.$.weeklyLimit
+		};
+		prompt('Export: Copy to clipboard', btoa(JSON.stringify(data)));
+	},
+
+	import () {
+		const base64 = prompt('Import: Paste from clipboard');
+		if (base64) {
+			const data = JSON.parse(atob(base64));
+			data.debts.forEach(debt => debt.payed = new XDate(XDate.parse(debt.payed)));
+			this.$ = this.defaultData();
+			this.set({
+				customLimits: data.customLimits,
+				debts: data.debts,
+				maxDebtTolerance: data.maxDebtTolerance,
+				maxWeekTolerance: data.maxWeekTolerance,
+				paymentChecks: data.paymentChecks,
+				weekPaymentDay: data.weekPaymentDay,
+				weeklyLimit: data.weeklyLimit
+			});
+			this.modify();
+		}
 	},
 
 	modify () {
-		setTimeout(() => this.set(() => this.$.modified = true), 0);
+		this.set(() => this.$.modified = true);
 	},
 
 	dateStr (date) {
@@ -258,15 +307,15 @@ const app = {
 	},
 
 	getPayments () {
-		if (this.$.debts.length === 0) {
-			return [];
-		}
-
 		const payments = [];
 		const durations = {};
 
 		const debtsByWeek = this.debtsByWeek();
 		const sortedDebts = this.getSortedDebts();
+
+		if (sortedDebts.length === 0) {
+			return [];
+		}
 
 		let startWeekKey;
 		let endDateKey = this.getKeyFromDate(sortedDebts[sortedDebts.length - 1].payed, true);

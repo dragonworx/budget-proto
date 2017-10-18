@@ -35,10 +35,19 @@ body * {
 #logo {
     text-shadow: 3px 3px 5px rgba(0,0,0,0.5);
     color: #3091a2;
-    font-size: 200%;
+    font-size: 100%;
     position: absolute;
-    left: 20px;
-    top: 6px;
+    left: 0;
+    top: 30px;
+    right: 0;
+}
+
+#logo .profile {
+    margin-left: 10px;
+    color: #72a2c6;
+    text-decoration: underline;
+    cursor: pointer;
+    font-style: italic;
 }
 
 .debts {
@@ -427,6 +436,7 @@ body * {
     box-shadow: inset 3px 3px 5px rgba(0,0,0,0.1);
     width: 50px;
     text-align: center;
+    height: 17px;
 }
 
 .settings input:hover {
@@ -450,13 +460,8 @@ body * {
     color: #c3ffc0;
 }
 
-.settings .save {
+.settings img {
     float: right;
     cursor: pointer;
+    margin-left: 15px;
 }
-
-.settings .clear {
-    float: right;
-    cursor: pointer;
-    margin-right: 15px;
-    

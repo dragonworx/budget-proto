@@ -32,7 +32,7 @@
 
       const log = this.__axis_log;
 
-      if (typeof a === 'object') {
+      if (typeof a === 'object' && !Array.isArray(a) && a !== null) {
         // merge partial state with current store
         log.push({type: 'partial', value: a});
         const partialState = a;
@@ -128,7 +128,9 @@
         if (this.hasOwnProperty(key)) {
           throw new Error('Cannot override existing key');
         } else {
-          this[key] = axis[key];
+          if (key !== '$') {
+            this[key] = axis[key];
+          }
         }
       }
 
@@ -139,6 +141,14 @@
 
     set (a, b) {
       this.__axis.set.apply(null, arguments);
+    }
+
+    get $() {
+      return this.__axis.$;
+    }
+
+    set $(state) {
+      this.__axis.$ = state;
     }
   }
 

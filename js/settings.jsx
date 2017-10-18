@@ -20,7 +20,7 @@ Settings = class extends Axial.Component {
 	render() {
 		return (
 			<div className="settings">
-      <div id="logo">{this.$.version}</div>
+      <div id="logo">{`v${this.$.version}`}<span className="profile" onClick={() => this.selectProfile()}>{this.getProfile()}</span></div>
 				<label>Spend: <b>$</b><input type="text" className="limit" defaultValue={this.$.weeklyLimit} onKeyUp={e => this.onKeyUp(e, 'weeklyLimit')} onMouseOver={this.onMouseOver} onMouseOut={e => this.onMouseOut(e, 'weeklyLimit')} /></label>
         <label>On: <select defaultValue={this.$.weekPaymentDay} onChange={e => this.set('weekPaymentDay', parseFloat(e.target.value))}>
           <option value="0">Sun</option>
@@ -39,9 +39,11 @@ Settings = class extends Axial.Component {
           Max Credit:&nbsp;
           <input type="text" defaultValue={this.$.maxDebtTolerance} onKeyUp={e => this.onKeyUp(e, 'maxDebtTolerance')} onMouseOver={this.onMouseOver} onMouseOut={e => this.onMouseOut(e, 'maxDebtTolerance')} />
         </label>
-        <img className="add" src={`img/add.png`} onClick={() => this.addDebt()} title="add a debt" />
+        <img className="add" src="img/add.png" onClick={() => this.addDebt()} title="add a debt" />
         <img className="save" src={`img/${this.$.modified ? 'modified' : this.$.saved ? 'save-ok' : 'save'}.png`} onClick={() => this.save()} title="save current data" />
         <img className="clear" src="img/clear.png" onClick={() => this.clear()} title="clear current data (does not save)" />
+        <img className="import" src="img/import.png" onClick={() => this.import()} title="import current data" />
+        <img className="export" src="img/export.png" onClick={() => this.export()} title="export current data" />
 			</div>
 		);
 	}
