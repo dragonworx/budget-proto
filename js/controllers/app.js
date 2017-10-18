@@ -8,7 +8,7 @@ function newGuid() {
 const app = {
 	defaultData () {
 		return {
-			version: '1.0.0',
+			version: '1.1.0',
 			weeklyLimit: 200,
 			weekPaymentDay: 4,
 			maxWeekTolerance: 7,
@@ -24,7 +24,23 @@ const app = {
 		}
 	},
 
-	$: null,
+	init () {
+		this.$ = this.defaultData();
+		this.load();
+		setTimeout(() => {
+			if (this.$.debts.length > 0) {
+				const selected = document.querySelector('td.selected');
+				if (selected) {
+					selected.scrollIntoView({behavior:'smooth'});
+				}
+			}
+		}, 100);
+		window.addEventListener('keyup', e => {
+			if (!this.$.edit && (e.keyCode === 107 || e.keyCode === 187)) {
+				this.addDebt();
+			}
+		});
+	},
 
 	pad (num) {
 		let str = '' + num;
@@ -36,6 +52,9 @@ const app = {
 	},
 
 	isEdit (debt) {
+		if (arguments.length === 0) {
+			return !!this.$.edit;
+		}
 		return this.$.edit && this.$.edit === debt;
 	},
 
@@ -46,6 +65,7 @@ const app = {
 	},
 
 	addDebt () {
+		this.$.hover = null;
 		if (arguments.length === 0) {
 			const id = this.newGuid();
 			const debt = {
@@ -69,19 +89,6 @@ const app = {
 		delete this.$.hover;
 		this.set();
 		this.modify();
-	},
-
-	init () {
-		this.$ = this.defaultData();
-		this.load();
-		setTimeout(() => {
-			if (this.$.debts.length > 0) {
-				const selected = document.querySelector('td.selected');
-				if (selected) {
-					selected.scrollIntoView({behavior:'smooth'});
-				}
-			}
-		}, 100);
 	},
 
 	clear () {
@@ -112,6 +119,54 @@ const app = {
 		return localStorage['budget-proto-profile'] ? localStorage['budget-proto-profile'] : 'default';
 	},
 
+	newGuid () {
+		const guid = newGuid();
+		if (this.$.debts.find(debt => debt.id === guid)) {
+			return this.guid;
+		}
+		return guid;
+	},
+
+	getData () {
+		return  {
+			version: this.$.version,
+			customLimits: this.$.customLimits,
+			debts: this.$.debts,
+			maxDebtTolerance: this.$.maxDebtTolerance,
+			maxWeekTolerance: this.$.maxWeekTolerance,
+			paymentChecks: this.$.paymentChecks,
+			weekPaymentDay: this.$.weekPaymentDay,
+			weeklyLimit: this.$.weeklyLimit
+		};
+	},
+
+	setData (data) {
+		data.debts.forEach(debt => debt.payed = new XDate(XDate.parse(debt.payed)));
+		this.$ = this.defaultData();
+		this.set({
+			customLimits: data.customLimits,
+			debts: data.debts,
+			maxDebtTolerance: data.maxDebtTolerance,
+			maxWeekTolerance: data.maxWeekTolerance,
+			paymentChecks: data.paymentChecks,
+			weekPaymentDay: data.weekPaymentDay,
+			weeklyLimit: data.weeklyLimit
+		});
+		this.modify();
+	},
+
+	export () {
+		prompt('Export: Copy to clipboard', btoa(JSON.stringify(this.getData())));
+	},
+
+	import () {
+		const base64 = prompt('Import: Paste from clipboard');
+		if (base64) {
+			const data = JSON.parse(atob(base64));
+			this.setData(data);
+		}
+	},
+
 	save (silent) {
 		if (silent !== true) {
 			this.set({
@@ -122,7 +177,7 @@ const app = {
 		}
 		this.$.saved = false;
 		this.$.modified = false;
-		localStorage[`budget-proto-${this.getProfile()}`] = JSON.stringify(this.$);
+		localStorage[`budget-proto-${this.getProfile()}`] = JSON.stringify(this.getData());
 		if (silent !== true) {
 			this.set({
 				saved: true,
@@ -134,53 +189,12 @@ const app = {
 	load () {
 		const data = localStorage[`budget-proto-${this.getProfile()}`];
 		if (data) {
-			this.$ = JSON.parse(data);
-		}
-		this.$.debts.forEach(debt => debt.payed = new XDate(XDate.parse(debt.payed)));
-	},
-
-	newGuid () {
-		const guid = newGuid();
-		if (this.$.debts.find(debt => debt.id === guid)) {
-			return this.guid;
-		}
-		return guid;
-	},
-
-	export () {
-		const data = {
-			customLimits: this.$.customLimits,
-			debts: this.$.debts,
-			maxDebtTolerance: this.$.maxDebtTolerance,
-			maxWeekTolerance: this.$.maxWeekTolerance,
-			paymentChecks: this.$.paymentChecks,
-			weekPaymentDay: this.$.weekPaymentDay,
-			weeklyLimit: this.$.weeklyLimit
-		};
-		prompt('Export: Copy to clipboard', btoa(JSON.stringify(data)));
-	},
-
-	import () {
-		const base64 = prompt('Import: Paste from clipboard');
-		if (base64) {
-			const data = JSON.parse(atob(base64));
-			data.debts.forEach(debt => debt.payed = new XDate(XDate.parse(debt.payed)));
-			this.$ = this.defaultData();
-			this.set({
-				customLimits: data.customLimits,
-				debts: data.debts,
-				maxDebtTolerance: data.maxDebtTolerance,
-				maxWeekTolerance: data.maxWeekTolerance,
-				paymentChecks: data.paymentChecks,
-				weekPaymentDay: data.weekPaymentDay,
-				weeklyLimit: data.weeklyLimit
-			});
-			this.modify();
+			this.setData(JSON.parse(data));
 		}
 	},
 
 	modify () {
-		this.set(() => this.$.modified = true);
+		setTimeout(() => this.set(() => this.$.modified = true), 0);
 	},
 
 	dateStr (date) {
@@ -460,14 +474,24 @@ const app = {
 		return payment.paymentAmount;
 	},
 
-	getTotalDebt (payment) {
+	getTotalWeekStartDebt (payment) {
+		let total = 0;
+		payment.debts.forEach(debt => total += debt.fromBalance);
+		return total;
+	},
+
+	getTotalWeekStartCredit (payment) {
+		return this.$.maxDebtTolerance - this.getTotalWeekStartDebt(payment);
+	},
+
+	getTotalWeekEndDebt (payment) {
 		let total = 0;
 		payment.debts.forEach(debt => total += debt.toBalance);
 		return total;
 	},
 
-	getTotalCredit (payment) {
-		return this.$.maxDebtTolerance - this.getTotalDebt(payment);
+	getTotalWeekEndCredit (payment) {
+		return this.$.maxDebtTolerance - this.getTotalWeekEndDebt(payment);
 	},
 
 	getDurations (payments) {
@@ -514,7 +538,7 @@ const app = {
 Axial.setAxis(app);
 
 window.onerror = function () {
-	alert('An application error occurred, check console...');
+	document.querySelector('.app').classList.add('error');
 }
 
 /*

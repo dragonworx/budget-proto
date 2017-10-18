@@ -88,8 +88,8 @@ Payments = class extends Axial.Component {
 			layout[this.dateStr(payment.paymentDate)].reverse().map(debtRef => {
 				return typeof debtRef === 'undefined' ? <div className="stream empty"></div> : (
 				<div className={`stream ${debtRef.type} ${this.isHover(debtRef.ref) ? 'hover' : ''} ${debtRef.status}`} 
-					onMouseOver={() => this.set('hover', debtRef.ref)} 
-					onDoubleClick={() => this.onDblClicked(debtRef.ref)}
+					onMouseOver={() => !this.isEdit() && this.set({hover: debtRef.ref, hoverAmount: null})} 
+					onDoubleClick={() => !this.isEdit() && this.onDblClicked(debtRef.ref)}
 					id={debtRef.type.match(/head|whole/) ? `debt-${debtRef.ref.id}` : null}
 				>
 						<div className="title">{debtRef.type.match(/head|whole/) ? debtRef.ref.title : ''}</div>
@@ -107,7 +107,7 @@ Payments = class extends Axial.Component {
 			return (
 				<td className={`week ${weekCss(payment)} ${isSelected(payment)} ${payment.debts.find(debt => debt.status === 'expired') ? 'expired' : ''}`}>
 					<div className={`amount ${this.hasCustomLimit(payment.paymentDate) ? 'custom' : ''}`} 
-						onMouseOver={() => this.set('hoverAmount', this.dateStr(payment.paymentDate))}>
+						onMouseOver={() => !this.isEdit() && this.set('hoverAmount', this.dateStr(payment.paymentDate))}>
 						{
 							this.$.hoverAmount === this.dateStr(payment.paymentDate) 
 								? <input type="text" defaultValue={this.currency(this.getPaymentAmount(payment, true))} 
@@ -118,14 +118,20 @@ Payments = class extends Axial.Component {
 						}
 						${this.currency(this.getPaymentAmount(payment))}
 					</div>
-					<div className="date">{this.dateStr(payment.paymentDate)}</div>
+					
+					<div className="date">{this.dateStr(payment.paymentDate)}<input type="checkbox" defaultChecked={this.getPaymentCheck(payment.weekStartDate)} onChange={e => this.setPaymentCheck(payment.weekStartDate, e.target.checked)} /></div>
 					<div className="month">{payment.paymentDate.getMonth() !== currentMonth ? (currentMonth = payment.paymentDate.getMonth(), `${payment.paymentDate.toString('MMM')} ${payment.paymentDate.getFullYear()}`) : ''}</div>
 					<div className="progressOuter"><div className="progressInner" style={{width:this.getProgress(payment)}}></div></div>
+					
 					<div className="totalDebtUsed">
-						${this.currency(this.getTotalDebt(payment))}
-						<input type="checkbox" defaultChecked={this.getPaymentCheck(payment.weekStartDate)} onChange={e => this.setPaymentCheck(payment.weekStartDate, e.target.checked)} />
+						<div className="from">${this.currency(this.getTotalWeekStartDebt(payment))}</div>
+						<div className="to">${this.currency(this.getTotalWeekEndDebt(payment))}</div>
 					</div>
-					<div className={`totalDebtRemaining ${this.getTotalCredit(payment) < 0 ? 'exceeded' : ''}`}>${this.currency(this.getTotalCredit(payment))}</div>
+					
+					<div className={`totalDebtRemaining ${this.getTotalWeekStartCredit(payment) < 0 ? 'exceeded' : ''}`}>
+						<div className="from">${this.currency(this.getTotalWeekStartCredit(payment))}</div>
+						<div className="to">${this.currency(this.getTotalWeekEndCredit(payment))}</div>
+					</div>
 				</td>
 			);
 		});

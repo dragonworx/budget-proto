@@ -1,5 +1,6 @@
 body {
     background-color: #243c31;
+    overflow: auto;
 }
 
 body * {
@@ -25,8 +26,8 @@ body * {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 75%;
-    height: 75%;
+    width: 95%;
+    height: 85%;
     font-family: monospace;
     border-radius: 10px;
     min-width: 670px;
@@ -36,9 +37,9 @@ body * {
     text-shadow: 3px 3px 5px rgba(0,0,0,0.5);
     color: #3091a2;
     font-size: 100%;
-    position: absolute;
+    position: fixed;
     left: 0;
-    top: 30px;
+    top: 9px;
     right: 0;
 }
 
@@ -51,30 +52,34 @@ body * {
 }
 
 .debts {
-    background: linear-gradient(0deg, #575757 0, #8f8f8f 100%);
+    background: linear-gradient(0deg, #434343 0, #666666 100%);
     flex-grow: 1;
     width: 100%;
     height: 20%;
     color: #e0dede;
     overflow: auto;
     border-bottom: 2px solid #656565;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
 }
 
 .debts table {
     width: 100%;
+    flex-grow: 1;
+    table-layout: fixed;
 }
 
 .debts table tr.alt {
-    background-color: rgba(0, 0, 0, 0.1);
+    background-color: rgba(0, 0, 0, 0.2);
 }
 
 .debts table th {
     text-align: left;
-    background-color: #2d6263;
+    background-color: #285758;
     color: #fff;
     padding: 5px;
     border-left: 1px dashed #848484;
-    width: 33%;
 }
 
 .debts table td {
@@ -112,10 +117,12 @@ body * {
     color: #c3ffc0;
     background-color: #327c64;
     box-shadow: inset 3px 3px 5px rgba(0,0,0,0.1);
+    font-size: 101%;
 }
 
 .debts table td input[type="checkbox"] {
-    margin-right: 10px;
+    margin-right: 20px;
+    margin-left: 10px;
 }
 
 .debts table td input[type="text"]:hover {
@@ -168,7 +175,7 @@ body * {
     background-color: #666;
     color: #ccc;
     padding: 3px;
-    background: linear-gradient(0deg, #37553d 0, #8f8f8f 100%);
+    background: linear-gradient(0deg, #1d4272 0, #4096a9 100%);
     position: relative;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
 }
@@ -227,35 +234,35 @@ body * {
 
 .payments .week.selected {
     background: rgb(89, 176, 157);
+    border: 2px solid #00abff;
 }
 
 .payments .week.selected .amount {
     background: linear-gradient(0deg, #419582 0, #44bca5 100%);
 }
 
-.payments .week input {
+.payments .week input[type="text"] {
     padding: 0px;
     border: 1px solid #718b89;
     font-family: monospace;
+    font-size: 100%;
     color: #c3ffc0;
+    border: 2px solid rgb(38, 152, 172);
     background-color: #1f5e70;
     box-shadow: inset 3px 3px 5px rgba(0,0,0,0.1);
     width: 50px;
     text-align: center;
     position: absolute;
     left: 0;
-    top: 1px;
+    top: 0;
     width: 100%;
     height: 20px;
 }
 
 .payments .week input[type="checkbox"] {
     position: absolute;
-    right: 1px;
-    top: 2px;
-    left: auto;
-    width: auto;
-    height: auto;
+    right: 0px;
+    top: 24px;
     cursor: pointer;
 }
 
@@ -264,18 +271,18 @@ body * {
 }
 
 .payments .week .totalDebtUsed {
-    background: linear-gradient(0deg, #498776 0, #574f17 100%);
+    background: linear-gradient(-90deg, #9d5050 0, #5f3030 100%);
     height: 20px;
     padding-top: 2px;
-    color: #82c473;
     position: relative;
+    color: #fea4a4;
 }
 
 .payments .week .totalDebtRemaining {
-    background: linear-gradient(0deg, #36533d 0, #6a6a6a 100%);
+    background: linear-gradient(-90deg, #1a662c 0, #246c1f 100%);
     height: 20px;
     padding-top: 1px;
-    color: #77c9ce;
+    color: #7fdd7b;
     position: relative;
     border-top: 1px solid #8b8b8b;
 }
@@ -306,13 +313,13 @@ body * {
 }
 
 .payments .stream.hover {
-    border-color: red;
+    border-color: #29e6db;
+    background: linear-gradient(0deg, #267726 0, #75bb75 100%);
 }
 
 .payments .stream.head {
     border-top-left-radius: 10px;
     border-bottom-left-radius: 10px;
-    margin-left: 5px;
 }
 
 .payments .stream.body {
@@ -321,6 +328,7 @@ body * {
 
 .payments .stream.tail {
     border-left: 1px dashed #325a32;
+    border-right: 2px solid #4ca23c;
 }
 
 .payments .stream.tail, .payments .stream.whole {
@@ -347,6 +355,10 @@ body * {
     text-align: left;
     padding-left: 2px;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    width: 89px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .payments .balance {
@@ -361,7 +373,7 @@ body * {
     border-radius: 5px;
 }
 
-.payments .balance .from, .payments .balance .to, .payments .balance .portion {
+.payments .from, .payments .to, .payments .portion {
     position: absolute;
     bottom: 0;
     padding: 2px;
@@ -377,17 +389,38 @@ body * {
     color: #ffcfcf;
 }
 
-.payments .balance .from {
+.payments .from {
     left: 0;
     background-color: rgba(0,0,0,0.2);
 }
 
-.payments .balance .to {
+.payments .to {
     right: 0;
     background-color: rgba(255,255,255,0.2);
 }
 
-.payments .balance .portion {
+.totalDebtUsed .from, .totalDebtUsed .to {padding: 1px;margin-bottom: 1px;}
+
+.totalDebtUsed .from {
+}
+
+.totalDebtUsed .to {
+    background-color: rgba(255,255,255,0.1);
+}
+
+.totalDebtRemaining .from, .totalDebtRemaining .to {
+
+}
+
+.totalDebtRemaining .from {
+    
+}
+
+.totalDebtRemaining .to {
+    background-color: rgba(255,255,255,0.1);
+}
+
+.payments .portion {
     position: static;
     margin: auto;
     display: block;
@@ -419,8 +452,18 @@ body * {
     padding: 10px;
     text-align: center;
     position: relative;
-    height: 30px;
+    height: 20px;
     white-space: nowrap;
+    padding-top: 10px;
+}
+
+.error .settings {
+    background: linear-gradient(0deg, #931c1c 0, #ff4040 100%);
+}
+
+.error .settings input[type="text"] {
+    background-color: red;
+    color: #fff;
 }
 
 .settings label {
@@ -464,4 +507,35 @@ body * {
     float: right;
     cursor: pointer;
     margin-left: 15px;
+}
+
+.space-left {
+    width: 20%;
+}
+
+.space-right {
+    width: 20%;
+}
+
+.title-head {width: 40%;}
+
+.amount-head {
+
+}
+
+.payed-head {
+    
+}
+
+td.check {
+    text-align: right;
+}
+
+.disable {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.2);
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
 }
