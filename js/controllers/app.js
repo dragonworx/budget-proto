@@ -8,7 +8,7 @@ function newGuid() {
 const app = {
 	defaultData () {
 		return {
-			version: '1.1.0',
+			version: '1.2.0',
 			weeklyLimit: 200,
 			weekPaymentDay: 4,
 			maxWeekTolerance: 7,
@@ -40,6 +40,7 @@ const app = {
 				this.addDebt();
 			}
 		});
+		this.io = document.querySelector('#io');
 	},
 
 	pad (num) {
@@ -53,7 +54,7 @@ const app = {
 
 	isEdit (debt) {
 		if (arguments.length === 0) {
-			return !!this.$.edit;
+			return !!this.$.edit;``
 		}
 		return this.$.edit && this.$.edit === debt;
 	},
@@ -156,15 +157,21 @@ const app = {
 	},
 
 	export () {
-		prompt('Export: Copy to clipboard', btoa(JSON.stringify(this.getData())));
+		const json = JSON.stringify(this.getData());
+		this.io.value = json;
+		this.io.style.display = 'block';
 	},
 
 	import () {
-		const base64 = prompt('Import: Paste from clipboard');
-		if (base64) {
-			const data = JSON.parse(atob(base64));
-			this.setData(data);
-		}
+		this.io.style.display = 'block';
+		this.io.addEventListener('keyup', e => {
+			if (e.keyCode === 13) {
+				const json = JSON.parse(this.io.value.trim());
+				this.setData(json);
+				this.save(true);
+				window.location.reload();
+			}
+		});
 	},
 
 	save (silent) {
@@ -352,6 +359,8 @@ const app = {
 		}
 
 		let weekIndex = 0;
+		let customLimit = 0;
+
 		while (debts.length > 0 || dateIndex <= endDate) {
 			weekIndex++;
 			// for each week, add existing debts for week onto stack
@@ -378,7 +387,10 @@ const app = {
 			const paymentDate = this.getNextPaymentDate(dateIndex);
 			const weekStartDate = dateIndex.clone();
 			const weekEndDate = weekStartDate.clone().addWeeks(1);
-			let limit = this.hasCustomLimit(paymentDate) ? this.getCustomLimit(paymentDate) : app.$.weeklyLimit;
+			if (this.hasCustomLimit(paymentDate)) {
+				customLimit = this.getCustomLimit(paymentDate);
+			}
+			let limit = customLimit ? customLimit : app.$.weeklyLimit;
 			this.payDebts(debts, limit);
 
 			// tally amount

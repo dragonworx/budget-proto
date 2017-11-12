@@ -36,6 +36,8 @@ Debts = class extends Axial.Component {
 	render() {
 		let isAltRow = true;
 		const rowCss = () => { isAltRow = !isAltRow; return isAltRow ? 'alt' : 'normal' };
+		// const debts = this.getSortedDebts(true);
+		const debts = this.$.debts.slice().reverse();
 		return (
 			<div className="debts">
 				<table cellSpacing="0" cellPadding="0">
@@ -50,7 +52,7 @@ Debts = class extends Axial.Component {
 					</thead>
 					<tbody>
 						{
-							this.getSortedDebts(true).map((debt, i) => {
+							debts.map((debt, i) => {
 								const cssClass = rowCss();
 								return (
 									<tr
