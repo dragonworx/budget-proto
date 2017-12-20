@@ -20,7 +20,9 @@ const app = {
 			modified: false,
 			hoverAmount: null,
 			customLimits: {},
-			paymentChecks: {}
+			paymentChecks: {},
+			hoverOverride: null,
+			customOverrides: {}
 		}
 	},
 
@@ -179,7 +181,8 @@ const app = {
 			this.set({
 				edit: null,
 				hover: null,
-				hoverAmount: null
+				hoverAmount: null,
+				hoverOverride: null
 			});
 		}
 		this.$.saved = false;
@@ -230,6 +233,15 @@ const app = {
 			delete this.$.customLimits[this.dateStr(date)];
 		} else {
 			this.$.customLimits[this.dateStr(date)] = amount;
+		}
+		this.modify();
+	},
+
+	setCustomOverride (date, amount) {
+		if (amount === null) {
+			delete this.$.customOverrides[this.dateStr(date)];
+		} else {
+			this.$.customOverrides[this.dateStr(date)] = amount;
 		}
 		this.modify();
 	},
@@ -343,6 +355,7 @@ const app = {
 		let endDate = this.getDateFromKey(endDateKey).date
 
 		let debts = [];
+
 		for (let key in debtsByWeek) {
 			if (!startWeekKey) {
 				startWeekKey = key;
@@ -362,12 +375,16 @@ const app = {
 		let customLimit = 0;
 
 		while (debts.length > 0 || dateIndex <= endDate) {
+			// for each WEEK, add existing debts for week onto stack
 			weekIndex++;
-			// for each week, add existing debts for week onto stack
+
+			// get debts for this week key
 			const key = this.getKeyFromDate(dateIndex, true);
 			const debtsThisWeek = debtsByWeek[key];
+
 			if (debtsThisWeek) {
 				debts.push.apply(debts, debtsThisWeek.map(debt => {
+					// create debt for week
 					return {
 						balance: debt.amount,
 						paymentAmount: 0,
@@ -387,24 +404,31 @@ const app = {
 			const paymentDate = this.getNextPaymentDate(dateIndex);
 			const weekStartDate = dateIndex.clone();
 			const weekEndDate = weekStartDate.clone().addWeeks(1);
+
+			// get available credit to spend for week
 			if (this.hasCustomLimit(paymentDate)) {
 				customLimit = this.getCustomLimit(paymentDate);
 			}
 			let limit = customLimit ? customLimit : app.$.weeklyLimit;
+
+			// pay debts using limit for that week
 			this.payDebts(debts, limit);
 
-			// tally amount
+			// tally total amount
 			let paymentAmount = 0;
 			debts.forEach(debt => {
 				paymentAmount += debt.portion;
 			});
 
-			// create payment
+			// create payment detail for week
 			const payment = {
 				debts: debts.map(debt => {
+					// 1. initialise running debts for week
 					const toBalance = debt.balance > 0 ? debt.balance : 0;
 					const type = debt.previousBalance === debt.ref.amount ? 'head' : toBalance <= 0 ? 'tail' : 'body';
+
 					let status = paymentDate < today ? 'expired': 'active';
+
 					if (!durations[debt.ref.id]) {
 						durations[debt.ref.id] = 0;
 					}
@@ -412,6 +436,8 @@ const app = {
 					if (durations[debt.ref.id] > this.$.maxWeekTolerance) {
 						status = 'warning';
 					}
+
+					// create a payment
 					return {
 						status: status,
 						portion: debt.portion,
@@ -421,14 +447,17 @@ const app = {
 						type: type === 'head' && toBalance === 0 ? 'head whole' : type
 					};
 				}).sort((a, b) => {
+					// 2. sort by payed date
 					return a.ref.payed < b.ref.payed;
 				}),
+				// payment properties
 				weekStartDate: weekStartDate,
 				weekEndDate: weekEndDate,
 				paymentDate: paymentDate,
 				paymentAmount: paymentAmount,
 				previousPayment: payments[payments.length - 1]
 			};
+
 			payments.push(payment);
 
 			// register weekstart check state
@@ -436,17 +465,21 @@ const app = {
 				this.setPaymentCheck(weekStartDate, false);
 			}
 
-			// increment by one week, remove resolved debts
+			// remove resolved debts from running debts
 			debts = debts.filter(debt => debt.balance > 0);
+
+			// increment by one week, calculate next week...
 			dateIndex.addWeeks(1);
 		}
 
+		// finished, return payments
 		return payments;
 	},
 
 	payDebts (debts, limit) {
 		// divide available portion limit by debts
 		const portion = Math.round(limit / debts.length);
+
 		debts.forEach(debt => {
 			debt.balance -= portion
 			debt.portion += portion;
@@ -460,13 +493,16 @@ const app = {
 
 		// redistribute remainder from total limit
 		let paymentAmount = 0;
+
 		debts.forEach(debt => {
 			paymentAmount += debt.portion;
 		});
+
 		if (debts.length > 0 && paymentAmount < limit) {
 			const remainderAmount = limit - paymentAmount;
 			const outstandingDebts = debts.filter(debt => debt.balance > 0);
 			const remainderLimit = Math.round(remainderAmount / outstandingDebts.length);
+
 			if (remainderLimit > 0) {
 				this.payDebts(outstandingDebts, remainderLimit);
 			}
@@ -487,19 +523,38 @@ const app = {
 	},
 
 	getTotalWeekStartDebt (payment) {
+		// use an override if found
+		const override = this.$.customOverrides[this.dateStr(payment.weekStartDate)];
+		if (!isNaN(override)) {
+			return override;
+		}
+
+		// otherwise return sum of running debt from balances
 		let total = 0;
 		payment.debts.forEach(debt => total += debt.fromBalance);
 		return total;
 	},
 
-	getTotalWeekStartCredit (payment) {
-		return this.$.maxDebtTolerance - this.getTotalWeekStartDebt(payment);
+	getTotalWeekEndDebt (payment) {
+		let runningFromBalance = 0;
+		payment.debts.forEach(debt => runningFromBalance += debt.fromBalance);
+
+		// TODO: should we just find normal delta between end and start, then add to getTotalWeekStartDebt()
+		let runningToBalance = 0;
+		payment.debts.forEach(debt => runningToBalance += debt.toBalance);
+		
+		let weekEndAmount = runningToBalance;
+
+		const override = this.$.customOverrides[this.dateStr(payment.weekStartDate)];
+		if (!isNaN(override)) {
+			weekEndAmount = runningToBalance + (override - runningFromBalance);
+		}
+
+		return weekEndAmount;
 	},
 
-	getTotalWeekEndDebt (payment) {
-		let total = 0;
-		payment.debts.forEach(debt => total += debt.toBalance);
-		return total;
+	getTotalWeekStartCredit (payment) {
+		return this.$.maxDebtTolerance - this.getTotalWeekStartDebt(payment);
 	},
 
 	getTotalWeekEndCredit (payment) {

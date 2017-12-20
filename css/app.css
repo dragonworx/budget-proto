@@ -115,7 +115,7 @@ body * {
     padding-left: 5px;
     font-family: monospace;
     color: #c3ffc0;
-    background-color: #327c64;
+    background-color: #2b8fd1;
     box-shadow: inset 3px 3px 5px rgba(0,0,0,0.1);
     font-size: 101%;
 }
@@ -246,9 +246,9 @@ body * {
     border: 1px solid #718b89;
     font-family: monospace;
     font-size: 100%;
-    color: #c3ffc0;
-    border: 2px solid rgb(38, 152, 172);
-    background-color: #1f5e70;
+    color: #383838;
+    border: 2px solid rgb(180, 143, 41);
+    background-color: #faef55;
     box-shadow: inset 3px 3px 5px rgba(0,0,0,0.1);
     width: 50px;
     text-align: center;

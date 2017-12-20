@@ -66,7 +66,7 @@ Payments = class extends Axial.Component {
 		return _paymentLayout;
 	}
 
-	onKeyUp (e, payment) {
+	onAmountKeyUp (e, payment) {
 		if (e.keyCode === 13) {
 			const amount = parseFloat(e.target.value);
 			this.setCustomLimit(payment.paymentDate, amount);
@@ -74,6 +74,17 @@ Payments = class extends Axial.Component {
 		} else if (e.keyCode === 27) {
 			this.setCustomLimit(payment.paymentDate, null);
 			this.set('hoverAmount');
+		}
+	}
+
+	onOverrideKeyUp (e, payment) {
+		if (e.keyCode === 13) {
+			const amount = parseFloat(e.target.value);
+			this.setCustomOverride(payment.weekStartDate, amount);
+			this.set('hoverOverride');
+		} else if (e.keyCode === 27) {
+			this.setCustomOverride(payment.weekStartDate, null);
+			this.set('hoverOverride');
 		}
 	}
 
@@ -111,7 +122,7 @@ Payments = class extends Axial.Component {
 						{
 							this.$.hoverAmount === this.dateStr(payment.paymentDate) 
 								? <input type="text" defaultValue={this.currency(this.getPaymentAmount(payment, true))} 
-										onKeyUp={e => this.onKeyUp(e, payment)} 
+										onKeyUp={e => this.onAmountKeyUp(e, payment)} 
 										onMouseOver={e => e.target.select()} 
 										onMouseOut={() => this.set('hoverAmount')} /> 
 								: null
@@ -119,12 +130,22 @@ Payments = class extends Axial.Component {
 						${this.currency(this.getPaymentAmount(payment))}
 					</div>
 					
-					<div className="date">{this.dateStr(payment.paymentDate)}<input type="checkbox" defaultChecked={this.getPaymentCheck(payment.weekStartDate)} onChange={e => this.setPaymentCheck(payment.weekStartDate, e.target.checked)} /></div>
+					<div className="date" onMouseOver={() => this.set({'hoverAmount': null, 'hoverOverride':null})}>{this.dateStr(payment.paymentDate)}<input type="checkbox" defaultChecked={this.getPaymentCheck(payment.weekStartDate)} onChange={e => this.setPaymentCheck(payment.weekStartDate, e.target.checked)} /></div>
 					<div className="month">{payment.paymentDate.getMonth() !== currentMonth ? (currentMonth = payment.paymentDate.getMonth(), `${payment.paymentDate.toString('MMM')} ${payment.paymentDate.getFullYear()}`) : ''}</div>
 					<div className="progressOuter"><div className="progressInner" style={{width:this.getProgress(payment)}}></div></div>
 					
 					<div className="totalDebtUsed">
-						<div className="from">${this.currency(this.getTotalWeekStartDebt(payment))}</div>
+						<div className="from" onMouseOver={() => this.set('hoverOverride', this.dateStr(payment.weekStartDate))}>
+							{
+								this.$.hoverOverride === this.dateStr(payment.weekStartDate)
+									? <input type="text" defaultValue={this.currency(this.getTotalWeekStartDebt(payment))} 
+										onKeyUp={e => this.onOverrideKeyUp(e, payment)} 
+										onMouseOver={e => e.target.select()} 
+										onMouseOut={() => this.set('hoverOverride')} />
+									: null
+							}
+							${this.currency(this.getTotalWeekStartDebt(payment))}
+						</div>
 						<div className="to">${this.currency(this.getTotalWeekEndDebt(payment))}</div>
 					</div>
 					
